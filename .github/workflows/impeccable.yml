@@ -1,0 +1,20 @@
+name: Impeccable Design Lint
+
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install -g impeccable
+      - run: impeccable detect --json src/ > audit.json
+      - run: |
+          if grep -q '"category":"slop"' audit.json; then
+            echo "❌ AI Slop detected. Fix before merging."
+            exit 1
+          fi
+          echo "✅ Design audit passed"
