@@ -1,0 +1,13 @@
+{
+  "week": 23,
+  "budget_usd_weekly": 50.0,
+  "reddit_subreddits_tier1": [
+    {"name": "r/entrepreneur", "max_posts": 100},
+    {"name": "r/smallbusiness", "max_posts": 80},
+    {"name": "r/startups", "max_posts": 60}
+  ],
+  "reddit_subreddits_tier2": [
+    {"name": "r/ecommerce", "max_posts": 40},
+    {"name": "r/business", "max_posts": 30}
+  ]
+}
