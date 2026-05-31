@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BulkDirect Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white">
+    <div id="app">
+        <!-- Hero -->
+        <div class="border-b border-gray-800 px-4 md:px-8 py-12 md:py-20">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl md:text-6xl font-bold mb-4">Marketplace B2B</h1>
+                <p class="text-xl text-gray-400 mb-8">
+                    Connecte-toi avec fournisseurs, consultants et partenaires vérifiés.
+                </p>
+                
+                <!-- CTA -->
+                <div class="flex gap-4">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-bold transition">
+                        Explorer Listings
+                    </button>
+                    <button class="border border-gray-600 hover:border-gray-400 text-white px-6 py-3 rounded font-bold transition">
+                        Publier une Offre
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="border-b border-gray-800 px-4 md:px-8 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- Search -->
+                <div class="mb-6">
+                    <input 
+                        type="text"
+                        id="searchInput"
+                        placeholder="Recherche par titre, vertical, ou type..."
+                        class="w-full bg-gray-900 border border-gray-800 rounded px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-600"
+                    />
+                </div>
+
+                <!-- Vertical Filter -->
+                <div class="flex gap-2 overflow-x-auto pb-2" id="filterButtons">
+                    <button class="vertical-filter px-4 py-2 rounded text-sm whitespace-nowrap transition bg-blue-600 text-white" data-filter="all">
+                        Tous
+                    </button>
+                    <button class="vertical-filter px-4 py-2 rounded text-sm whitespace-nowrap transition border border-gray-700 text-gray-400 hover:border-gray-500" data-filter="b2b">
+                        Services B2B
+                    </button>
+                    <button class="vertical-filter px-4 py-2 rounded text-sm whitespace-nowrap transition border border-gray-700 text-gray-400 hover:border-gray-500" data-filter="ecommerce">
+                        E-commerce
+                    </button>
+                    <button class="vertical-filter px-4 py-2 rounded text-sm whitespace-nowrap transition border border-gray-700 text-gray-400 hover:border-gray-500" data-filter="industrial">
+                        Industriel
+                    </button>
+                    <button class="vertical-filter px-4 py-2 rounded text-sm whitespace-nowrap transition border border-gray-700 text-gray-400 hover:border-gray-500" data-filter="tech">
+                        Tech
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Listings Grid -->
+        <div class="px-4 md:px-8 py-12">
+            <div class="max-w-4xl mx-auto">
+                <p class="text-gray-400 mb-6"><span id="resultsCount">6</span> résultats</p>
+                
+                <div class="space-y-4" id="listingsContainer">
+                    <!-- Listings will be inserted here -->
+                </div>
+
+                <!-- Load More -->
+                <div class="text-center mt-8">
+                    <button class="border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white px-6 py-3 rounded transition">
+                        Charger plus
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer CTA -->
+        <div class="border-t border-gray-800 px-4 md:px-8 py-12 bg-gray-950">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold mb-4">Prêt à trouver ton partenaire?</h2>
+                <p class="text-gray-400 mb-6">
+                    Rejoins 500+ entrepreneurs qui utilisent BulkDirect pour sourcer et vendre.
+                </p>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded font-bold transition">
+                    S'inscrire Gratuitement
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="border-t border-gray-800 px-4 md:px-8 py-8 text-center text-gray-500 text-xs">
+            <p>© 2025 BulkDirect. Tous fournisseurs vérifiés. Aucune commission.</p>
+        </div>
+    </div>
+
+    <script>
+        const listings = [
+            {
+                id: 1,
+                title: 'Fournisseur SaaS B2B EU',
+                vertical: 'Services B2B',
+                verticalFilter: 'b2b',
+                desc: 'Plateforme de sourcing wholesale pour clients PME. Réseau fournisseurs vérifié, remises volume, fulfillment rapide.',
+                price: '€5K–€50K',
+                posted: '31 mai',
+                postedBy: '@entrepreneur_fr',
+            },
+            {
+                id: 2,
+                title: 'Partenaire Dropshipping Wholesale',
+                vertical: 'E-commerce',
+                verticalFilter: 'ecommerce',
+                desc: 'Fournisseur de produits wholesale. Spécialisé e-commerce. Délais rapides (2–5j), support client 24/7.',
+                price: '€2K–€20K',
+                posted: '30 mai',
+                postedBy: '@shop_founder',
+            },
+            {
+                id: 3,
+                title: 'Réseau Contacts Fabrication',
+                vertical: 'Industriel',
+                verticalFilter: 'industrial',
+                desc: 'Réseau de fabricants vérifiés (UE). Commandes volume, certifications qualité, délais 4–6 semaines.',
+                price: '€10K–€100K',
+                posted: '29 mai',
+                postedBy: '@sourcing_pro',
+            },
+            {
+                id: 4,
+                title: 'API Intégration Logistique',
+                vertical: 'Tech',
+                verticalFilter: 'tech',
+                desc: 'API fulfillment complète. Intégration Shopify, WooCommerce, custom. Support technique 24/7.',
+                price: '€1K–€10K/mo',
+                posted: '28 mai',
+                postedBy: '@tech_founder',
+            },
+            {
+                id: 5,
+                title: 'Consultant B2B Sourcing',
+                vertical: 'Services B2B',
+                verticalFilter: 'b2b',
+                desc: 'Expert sourcing international. Audit fournisseurs, négociation, setup contrats. Retour on investment garanti.',
+                price: '€15K–€80K',
+                posted: '27 mai',
+                postedBy: '@consultant_b2b',
+            },
+            {
+                id: 6,
+                title: 'Plateforme Marketplace Private Label',
+                vertical: 'E-commerce',
+                verticalFilter: 'ecommerce',
+                desc: 'Solution white-label pour vendre private label. Intégration supplier management, fulfillment inclus.',
+                price: '€5K–€30K/mo',
+                posted: '26 mai',
+                postedBy: '@marketplace_ops',
+            },
+        ];
+
+        let currentFilter = 'all';
+
+        function renderListings() {
+            const container = document.getElementById('listingsContainer');
+            const filtered = currentFilter === 'all' 
+                ? listings 
+                : listings.filter(l => l.verticalFilter === currentFilter);
+
+            container.innerHTML = filtered.map(listing => `
+                <div class="border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition cursor-pointer group">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold group-hover:text-blue-400 transition">
+                                ${listing.title}
+                            </h3>
+                            <p class="text-blue-400 text-sm">${listing.vertical}</p>
+                        </div>
+                        <p class="text-green-400 font-bold text-lg">${listing.price}</p>
+                    </div>
+
+                    <p class="text-gray-300 text-sm mb-4">
+                        ${listing.desc}
+                    </p>
+
+                    <div class="flex justify-between items-center">
+                        <div class="text-xs text-gray-500">
+                            <p>Publié ${listing.posted} par ${listing.postedBy}</p>
+                        </div>
+                        <span class="text-gray-600 group-hover:text-gray-400 transition">→</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('resultsCount').textContent = filtered.length;
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.vertical-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active state from all buttons
+                document.querySelectorAll('.vertical-filter').forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white');
+                    b.classList.add('border', 'border-gray-700', 'text-gray-400');
+                });
+                
+                // Add active state to clicked button
+                this.classList.add('bg-blue-600', 'text-white');
+                this.classList.remove('border', 'border-gray-700', 'text-gray-400');
+                
+                currentFilter = this.dataset.filter;
+                renderListings();
+            });
+        });
+
+        // Initial render
+        renderListings();
+    </script>
+</body>
+</html>
