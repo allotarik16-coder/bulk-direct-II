@@ -1,0 +1,28 @@
+{
+  "week": 23,
+  "date": "2025-05-31",
+  "reddit_sourcing": {
+    "posts_scraped": 0,
+    "posts_inserted": 0,
+    "sourcing_rate_baseline": 60,
+    "sourcing_rate_threshold": 40
+  },
+  "batch_api": {
+    "cost_estimated": 0.24,
+    "cost_actual": 0.0,
+    "requests_made": 0,
+    "error_rate": 0.0,
+    "error_rate_threshold": 0.02
+  },
+  "qa": {
+    "listings_processed": 0,
+    "listings_passed": 0,
+    "pass_rate": 0.0,
+    "pass_rate_threshold": 0.95
+  },
+  "competitive": {
+    "last_update": "2025-05-28",
+    "age_days": 3,
+    "age_threshold_days": 7
+  }
+}
