@@ -1,0 +1,194 @@
+name: Sync Memory to Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'LEARNINGS.md'
+      - '.claude/rules/**'
+      - '.github/workflows/memory-to-supabase.yml'
+  workflow_dispatch:
+
+jobs:
+  sync-memory:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SUPABASE_PROJECT: icpdgjzlmdculnrxmjiy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install --save-dev \
+            @supabase/supabase-js \
+            openai \
+            js-yaml
+
+      - name: Parse LEARNINGS.md and sync to Supabase
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const { createClient } = require('@supabase/supabase-js');
+          const yaml = require('js-yaml');
+
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_KEY;
+
+          if (!supabaseUrl || !supabaseKey) {
+            console.error('❌ SUPABASE_URL or SUPABASE_KEY not set');
+            process.exit(1);
+          }
+
+          const supabase = createClient(supabaseUrl, supabaseKey);
+
+          // Parse LEARNINGS.md
+          const learningsContent = fs.readFileSync('LEARNINGS.md', 'utf-8');
+          const patterns = [];
+
+          // Extract patterns (sections starting with ##)
+          const sections = learningsContent.split('\n## ').slice(1);
+          
+          sections.forEach(section => {
+            const lines = section.split('\n');
+            const categoryRaw = lines[0].trim();
+            const category = categoryRaw.toLowerCase().replace(/\s+/g, '-');
+            
+            // Extract content until next section
+            const content = lines.slice(1).join('\n').trim();
+            
+            if (content && !content.startsWith('[PROMOTED]')) {
+              patterns.push({
+                pattern_name: categoryRaw,
+                category: category,
+                content: content.substring(0, 500), // truncate for display
+                occurrences: 1,
+                promoted: false
+              });
+            }
+          });
+
+          console.log(`📦 Found ${patterns.length} patterns to sync`);
+
+          // Sync to Supabase (upsert)
+          (async () => {
+            for (const pattern of patterns) {
+              try {
+                const { data, error } = await supabase
+                  .from('memory_learnings')
+                  .upsert([
+                    {
+                      pattern_name: pattern.pattern_name,
+                      category: pattern.category,
+                      content: pattern.content,
+                      occurrences: pattern.occurrences,
+                      promoted: pattern.promoted,
+                      last_seen: new Date().toISOString()
+                    }
+                  ], { onConflict: 'pattern_name,category' });
+
+                if (error) {
+                  console.error(`❌ Error syncing ${pattern.pattern_name}:`, error);
+                } else {
+                  console.log(`✅ Synced: ${pattern.pattern_name}`);
+                }
+              } catch (err) {
+                console.error(`❌ Exception:`, err.message);
+              }
+            }
+
+            console.log(`\n✨ Sync complete!`);
+            process.exit(0);
+          })();
+          EOF
+
+      - name: Vectorize patterns (OpenAI embeddings)
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          node << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          const { OpenAI } = require('openai');
+
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_KEY;
+          const openaiKey = process.env.OPENAI_API_KEY;
+
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const openai = new OpenAI({ apiKey: openaiKey });
+
+          (async () => {
+            // Fetch patterns without vectors
+            const { data: patterns, error } = await supabase
+              .from('memory_learnings')
+              .select('id, pattern_name, content')
+              .is('vector', null)
+              .limit(10);
+
+            if (error) {
+              console.error('❌ Error fetching patterns:', error);
+              process.exit(1);
+            }
+
+            console.log(`🔢 Vectorizing ${patterns.length} patterns...`);
+
+            for (const pattern of patterns) {
+              try {
+                const embedding = await openai.embeddings.create({
+                  model: 'text-embedding-3-small',
+                  input: `${pattern.pattern_name} ${pattern.content}`,
+                });
+
+                const vector = embedding.data[0].embedding;
+
+                const { error: updateError } = await supabase
+                  .from('memory_learnings')
+                  .update({ vector })
+                  .eq('id', pattern.id);
+
+                if (updateError) {
+                  console.error(`❌ Error updating ${pattern.id}:`, updateError);
+                } else {
+                  console.log(`✅ Vectorized: ${pattern.pattern_name}`);
+                }
+              } catch (err) {
+                console.error(`❌ Exception:`, err.message);
+              }
+            }
+
+            console.log('\n✨ Vectorization complete!');
+            process.exit(0);
+          })();
+          EOF
+
+      - name: Update .claude/rules/** to Supabase (rules_as_learnings)
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const { createClient } = require('@supabase/supabase-js');
+
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_KEY;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+
+          const rulesDir = '.claude/rules';
+
+          if (!fs.existsSync(rulesDir)) {
+            console.log('📋 No .claude/rules/ directory found');
+            process.exit(0);
+          }
