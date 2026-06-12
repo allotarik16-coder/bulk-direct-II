@@ -1,0 +1,214 @@
+{
+  "memory": {
+    "max_lines": 200,
+    "supabase_project": "icpdgjzlmdculnrxmjiy",
+    "supabase_region": "eu-west-1",
+    "vector_model": "text-embedding-3-small",
+    "vector_dimensions": 1536,
+    "categories": [
+      "reddit-scraper",
+      "pipeline-orchestration",
+      "error-recovery",
+      "testing",
+      "deployment",
+      "monitoring"
+    ],
+    "auto_promote_threshold": 3,
+    "stale_entry_age_days": 30,
+    "capacity_warning_threshold_percent": 60,
+    "capacity_critical_threshold_percent": 90
+  },
+  "agents": [
+    {
+      "name": "Planificateur",
+      "role": "task-planning",
+      "input": "project_goals, subreddit_list",
+      "output": "task_list (crm_deals)",
+      "stage": 1
+    },
+    {
+      "name": "Exécuteur Reddit",
+      "role": "data-collection",
+      "input": "task_list (crm_deals)",
+      "output": "reddit_posts, analysis (crm_interactions)",
+      "stage": 2,
+      "tools": ["PRAW", "Playwright"]
+    },
+    {
+      "name": "Ingénieur Pipeline",
+      "role": "orchestration",
+      "input": "reddit_posts, analysis",
+      "output": "crm_contacts, crm_leads",
+      "stage": 3
+    },
+    {
+      "name": "QA Reviewer",
+      "role": "validation",
+      "input": "crm_leads",
+      "output": "final_validated_data",
+      "stage": 4
+    }
+  ],
+  "rules": {
+    "directory": ".claude/rules",
+    "applies_to_patterns": [
+      "src/**/*.ts",
+      "src/**/*.js",
+      "scripts/**/*.sh"
+    ],
+    "priority_levels": [
+      "critical",
+      "high",
+      "medium",
+      "low"
+    ]
+  },
+  "supabase": {
+    "project_id": "icpdgjzlmdculnrxmjiy",
+    "region": "eu-west-1",
+    "tables": {
+      "memory_learnings": {
+        "columns": [
+          "id (UUID)",
+          "pattern_name (TEXT)",
+          "category (TEXT)",
+          "content (TEXT)",
+          "occurrences (INT)",
+          "promoted (BOOLEAN)",
+          "extracted_skill (TEXT)",
+          "vector (VECTOR 1536)",
+          "created_at (TIMESTAMP)",
+          "updated_at (TIMESTAMP)"
+        ],
+        "indexes": [
+          "pattern_name",
+          "category",
+          "promoted",
+          "vector (ivfflat, lists=100)"
+        ]
+      },
+      "crm_leads": {
+        "purpose": "qualified prospects from Reddit"
+      },
+      "crm_deals": {
+        "purpose": "pipeline tasks and status"
+      },
+      "crm_interactions": {
+        "purpose": "errors, logs, analysis results"
+      },
+      "reddit_posts": {
+        "purpose": "raw Reddit data collected"
+      }
+    }
+  },
+  "github": {
+    "workflows": {
+      "memory-to-supabase": {
+        "trigger": "push to LEARNINGS.md, .claude/rules/**",
+        "actions": [
+          "Parse LEARNINGS.md",
+          "Sync patterns to Supabase",
+          "Vectorize (OpenAI embeddings)",
+          "Update rules from .claude/rules/",
+          "Generate memory report"
+        ]
+      },
+      "ci-cd": {
+        "trigger": "push to main, PR",
+        "actions": [
+          "Lint (ESLint, Prettier)",
+          "Test (Jest)",
+          "Validate DAG structure",
+          "Deploy agents"
+        ]
+      }
+    },
+    "secrets_required": [
+      "SUPABASE_URL",
+      "SUPABASE_KEY",
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY (optional)",
+      "SLACK_WEBHOOK (optional)"
+    ]
+  },
+  "commands": {
+    "review": {
+      "trigger": "/si:review",
+      "script": "./scripts/si-cli.sh review",
+      "output": "promotion candidates, stale entries, capacity status"
+    },
+    "promote": {
+      "trigger": "/si:promote <pattern_name>",
+      "script": "./scripts/si-cli.sh promote '<pattern_name>'",
+      "output": ".claude/rules/{category}.md"
+    },
+    "extract": {
+      "trigger": "/si:extract <pattern_name> [--name skill-name]",
+      "script": "./scripts/si-cli.sh extract '<pattern_name>' '<skill_name>'",
+      "output": "skills/{skill_name}/SKILL.md"
+    },
+    "status": {
+      "trigger": "/si:status",
+      "script": "./scripts/si-cli.sh status",
+      "output": "memory health dashboard"
+    },
+    "cleanup": {
+      "trigger": "/si:cleanup [--older-than 30]",
+      "script": "./scripts/si-cli.sh cleanup",
+      "output": "removed stale entries count"
+    }
+  },
+  "maintenance": {
+    "weekly": {
+      "day": "Sunday",
+      "time": "18:00 UTC",
+      "task": "Review memory patterns (5 min)"
+    },
+    "monthly": {
+      "task": "Check credentials, rotate if needed",
+      "credentials": [
+        "ANTHROPIC_API_KEY",
+        "SUPABASE_KEY",
+        "GitHub Secrets audit"
+      ]
+    },
+    "auto_cleanup": {
+      "frequency": "weekly",
+      "removes": "stale entries (30+ days old)",
+      "target_capacity": "150 lines free"
+    }
+  },
+  "integrations": {
+    "make": {
+      "purpose": "orchestrate agents",
+      "modules": ["Planificateur", "Exécuteur", "Ingénieur", "QA"],
+      "error_handling": "propagate to Slack"
+    },
+    "slack": {
+      "webhook": "SLACK_WEBHOOK env var",
+      "channels": ["#bulk-direct-alerts", "#dev"],
+      "message_types": [
+        "error_alerts",
+        "pattern_promotions",
+        "skill_extractions",
+        "deployment_status"
+      ]
+    },
+    "github_actions": {
+      "trigger": "push, manual dispatch",
+      "docker_enabled": false,
+      "npm_cache": true,
+      "node_version": "20"
+    }
+  },
+  "performance": {
+    "memory_budget_tokens": 190000,
+    "pattern_content_max_chars": 500,
+    "learnings_file_max_bytes": 50000,
+    "supabase_query_timeout_ms": 5000
+  },
+  "version": "1.0.0",
+  "updated_at": "2026-06-12T00:00:00Z",
+  "maintainer": "tarik",
+  "github_repo": "allotarik16-coder/bulk-direct-II"
+}
