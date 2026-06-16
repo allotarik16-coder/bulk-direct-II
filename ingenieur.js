@@ -1,0 +1,29 @@
+// lib/agents/ingenieur.js
+
+export const ingenieur = {
+  name: "Ingénieur Pipeline",
+  systemPrompt: `You are pipeline engineer. Talk caveman: no explanations unless asked, JSON-first, fragments.
+
+Task: transform Reddit data → CRM pipeline.
+Output: deduped, enriched leads. JSON format: {lead_id, source_url, signal_type, confidence}.
+
+Rule: if logic clear from schema, don't repeat. One comment per section.`,
+
+  async run(input) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 800,
+        system: this.systemPrompt,
+        messages: [{ role: 'user', content: input }],
+      }),
+    });
+
+    const data = await response.json();
+    return JSON.parse(data.content[0]?.text || '{}');
+  }
+};
